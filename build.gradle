@@ -1,0 +1,41 @@
+plugins {
+    id 'java'
+    id 'io.franzbecker.gradle-lombok' version '2.0'
+}
+
+apply from: 'gradle/props.gradle'
+
+sourceCompatibility = 1.11
+ext.profile = 'local'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compileOnly "org.projectlombok:lombok:$lombokVer"
+    implementation "org.apache.logging.log4j:log4j-api:$log4jVer"
+    implementation "org.glassfish.jaxb:jaxb-runtime:2.3.2"
+    implementation "org.rapidoid:rapidoid-commons:5.5.5"
+    implementation "org.apache.commons:commons-collections4:4.3"
+    implementation "com.hierynomus:sshj:0.27.0"
+    implementation "com.ancientprogramming.fixedformat4j:fixedformat4j:1.2.2"
+}
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+lombok {
+    version = '1.18.4'
+    sha256 = ""
+}
+
+if (project.hasProperty("p")) {
+    sourceSets.main.resources.srcDirs = ['src/main/resources', 'profile/common', 'profile/' + p]
+    println p + ' profile applied'
+    profile = p
+} else {
+    sourceSets.main.resources.srcDirs = ['src/main/resources', 'profile/common', 'profile/local']
+    println 'local profile applied'
+    profile = 'local'
+}

@@ -1,0 +1,29 @@
+# Purpose
+This project aims to address EDI Ansi 315 to receive and send transaction to 3rd parties.
+
+## Branches
+There are three branches for which you should concern yourself with:
+* master: maintains release build
+* dev: maintains current development
+* feature: maintains specific feature fea-01
+
+## Environment
+Code formatting uses intellij-java-goolgle-style.xml and editor uses Intellij CE version
+JDK version at least 1.11
+
+## Functions
+This module includes three parts. The fundamental setting and project library is controlled by Allis. 
+
+- 315 edi parser
+- ftp folder scan and archive: sftp client sample is in conn folder
+- different format in-out (fixed length and edi/xml output): fixed length see parser/text folder
+
+## Package Structure
+- conn: connectivity such as sftp, etc
+- integration: repo defines repository, model define entity
+- parser: edi for general and 315 spec, text for plain text with fixed length, util for common reused functions
+
+## Assigment
+For Jimmy: 
+1. know how to use sftp and practice how to scan folder and load file
+2. check BasicRecord/BasicUsage to know how to define fixed length schema 
