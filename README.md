@@ -15,7 +15,13 @@ JDK version at least 1.11
 This module includes three parts. The fundamental setting and project library is controlled by Allis. 
 
 - 315 edi parser
-- ftp folder scan and archive: sftp client sample is in conn folder
+- ftp folder scan and archive: sftp client sample is in conn folder. 
+enter ftp entry, ls to find out vendor lists. find out how many edi files that need to be handled. 
+for each vendor, cd vendor/Inbound/EDI315, ls to get edi file lists for this vendor.
+archive all edi files in that folder and download it to local, extract.
+If all edi files in that folder handled properly, check whether edi files has changed.
+if not, move archive to archived folder and delete all
+If additional one has added, then keep it and remove remaining.
 - different format in-out (fixed length and edi/xml output): fixed length see parser/text folder
 
 ## Package Structure
@@ -27,3 +33,4 @@ This module includes three parts. The fundamental setting and project library is
 For Jimmy: 
 1. know how to use sftp and practice how to scan folder and load file
 2. check BasicRecord/BasicUsage to know how to define fixed length schema 
+3. sftp info cmd: sftp -P 2222 oecdev@52.199.51.30 passwd:OecDev^345. cd Testing/Inbound/EDI315, ls files
