@@ -6,6 +6,8 @@ package com.oecgroup.parser.edi.spec;
  */
 public class DTM implements Segment {
 
+  private final static String EST = "139";
+  private final static String ACT = "140";
   //ID3 DTM01 139 Estimated 140 Actual
   @EdiRef(ref = "DTM01")
   public String dtQual;
@@ -18,5 +20,9 @@ public class DTM implements Segment {
   //ID2 DTM04
   @EdiRef(ref = "DTM04")
   public String zone;
+
+  public boolean isActual() {
+    return ACT.equals(dtQual);
+  }
   //not used after
 }

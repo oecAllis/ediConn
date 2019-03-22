@@ -9,6 +9,8 @@ import lombok.Data;
 @Data
 public class X12_315 extends X12 {
 
+  public String fileName;
+
   public static class X12_315_txn extends X12_Txn {
 
     public B4 b4;

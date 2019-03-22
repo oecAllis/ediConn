@@ -34,12 +34,16 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.map.LazyMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.rapidoid.u.U;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class EdiReader {
+
+  private final static Logger logger = LogManager.getLogger(EdiReader.class);
 
   private boolean includeEmptyElements = true;
 
@@ -212,13 +216,18 @@ public class EdiReader {
       switch (segId) {
         case "IEA":
           x12Instance.iea = (InterChangeTrailer) segmentInstance;
+          if (!x12Instance.iea.control.equals(x12Instance.isa.control)) {
+            logger.error(
+                "control number mismatched: header " + x12Instance.isa.control + " trailer "
+                    + x12Instance.iea.control);
+          }
           break;
         case "GE":
           x12Instance.ge = (SegmentGroupTrailer) segmentInstance;
-          if (Integer.valueOf(x12Instance.ge.transactionCount) == txnCount) {
-            System.out.println("pass txn check");
-          } else {
-            System.err.println("no pass txn check");
+          if (Integer.valueOf(x12Instance.ge.transactionCount) != txnCount) {
+            logger.error(
+                "transaction count mismatched: expected count " + x12Instance.ge.transactionCount
+                    + ", real count " + txnCount);
           }
           break;
         case "SE":
@@ -226,10 +235,10 @@ public class EdiReader {
           Cloner cloner = new Cloner();
           x12Instance.txns.add(cloner.deepClone(txn));
           segCount++;
-          if (Integer.valueOf(txn.se.segmentCounts) == segCount) {
-            System.out.println("pass segcount check");
-          } else {
-            System.err.println("no pass segment check");
+          if (Integer.valueOf(txn.se.segmentCounts) != segCount) {
+            logger.error(
+                "segment count mismatched: expected count " + txn.se.segmentCounts + ", real count "
+                    + segCount);
           }
           txnCount++;
           segCount = 0;
@@ -259,6 +268,7 @@ public class EdiReader {
   }
 
   public void parse(Reader reader, X12 x12, X12_Txn txn) throws IOException, SAXException {
+    logger.info("Start parsing edi document");
     EDITokenizer tokenizer = new EDITokenizer(reader);
     this.x12Instance = x12;
     this.txn = txn;
@@ -270,6 +280,7 @@ public class EdiReader {
     }
     end();
     reader.close();
+    logger.info("Finish parsing edi document with total transaction count " + txnCount);
   }
 
   private void renderObject(Segment segment, String name, Element content, Field[] fields)
