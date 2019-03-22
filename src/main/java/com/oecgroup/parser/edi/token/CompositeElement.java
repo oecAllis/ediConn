@@ -26,13 +26,21 @@ public class CompositeElement extends Element {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
 
     CompositeElement that = (CompositeElement) o;
 
-    if (parts != null ? !parts.equals(that.parts) : that.parts != null) return false;
+    if (parts != null ? !parts.equals(that.parts) : that.parts != null) {
+      return false;
+    }
 
     return true;
   }

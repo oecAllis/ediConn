@@ -1,42 +1,50 @@
 package com.oecgroup.parser.edi.spec;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 /**
- * Created by Allis Kuo on 2019-03-20
- * To transmit identifying numbers, dates, and other basic data relating to the
- * transaction set
- * B4***VD*20160526*2245**HASU*431617*L*45G1*JACKSONVILLE, FL,
+ * Created by Allis Kuo on 2019-03-20 To transmit identifying numbers, dates, and other basic data
+ * relating to the transaction set B4***VD*20160526*2245**HASU*431617*L*45G1*JACKSONVILLE, FL,
  * US*CI*0~
  */
-public class B4 {
+public class B4 implements Segment {
 
   //Not used B401
-  private String code;
+  @EdiRef(ref = "B401")
+  public String code;
   //Not used B402
-  private int number;
+  @EdiRef(ref = "B402")
+  public String number;
   //ID1-2 B403
-  private String statusCode;
+  @EdiRef(ref = "B403")
+  public String statusCode;
   //DT8 B404 format yyyymmdd
-  private LocalDate date;
+  @EdiRef(ref = "B404")
+  public String date;
   //TM4 B405 format hhmm
-  private LocalDateTime time;
+  @EdiRef(ref = "B405")
+  public String time;
   //Not used B406
-  private String location;
+  @EdiRef(ref = "B406")
+  public String location;
   //An1-4 B407
-  private String equipInitial;
+  @EdiRef(ref = "B407")
+  public String equipInitial;
   //An1-10 B408
-  private String equipNumber;
+  @EdiRef(ref = "B408")
+  public String equipNumber;
   //ID1-2 E empty L load B409
-  private String equipStatusCode;
+  @EdiRef(ref = "B409")
+  public String equipStatusCode;
   //ID4 B410
-  private String equipType;
+  @EdiRef(ref = "B410")
+  public String equipType;
   //AN1-30 UNLOCODE or City name
-  private String locationCode;
+  @EdiRef(ref = "B411")
+  public String locationCode;
   //ID1-2 CI city UN UNLOCODE
-  private String locationQual;
+  @EdiRef(ref = "B412")
+  public String locationQual;
   //N1
-  private int checkDigit;
+  @EdiRef(ref = "B413")
+  public String checkDigit;
 
 }

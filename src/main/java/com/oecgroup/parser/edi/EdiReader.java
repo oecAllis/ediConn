@@ -1,12 +1,28 @@
 package com.oecgroup.parser.edi;
+
 import com.oecgroup.parser.edi.loops.EdiStructure;
 import com.oecgroup.parser.edi.loops.Loop;
+import com.oecgroup.parser.edi.spec.EdiRef;
+import com.oecgroup.parser.edi.spec.InterChangeHeader;
+import com.oecgroup.parser.edi.spec.InterChangeTrailer;
+import com.oecgroup.parser.edi.spec.Segment;
+import com.oecgroup.parser.edi.spec.SegmentGroupHeader;
+import com.oecgroup.parser.edi.spec.SegmentGroupTrailer;
+import com.oecgroup.parser.edi.spec.TransactionHeader;
+import com.oecgroup.parser.edi.spec.TransactionTrailer;
+import com.oecgroup.parser.edi.spec.X12;
+import com.oecgroup.parser.edi.spec.X12_Txn;
 import com.oecgroup.parser.edi.token.CompositeElement;
 import com.oecgroup.parser.edi.token.EDITokenizer;
 import com.oecgroup.parser.edi.token.Element;
 import com.oecgroup.parser.edi.token.RepeatingElement;
+import com.rits.cloning.Cloner;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -35,12 +51,21 @@ public class EdiReader {
 
   private Map<String, BiConsumer<List<Element>, EDITokenizer>> segmentHandlers;
 
-  private Map<String,Set<Integer>> attDefs;
+  private Map<String, Set<Integer>> attDefs;
 
-  public EdiReader(String rootElement, EdiStructure structure){
+  private X12 x12Instance;
+
+  private X12_Txn txn;
+
+  private int txnCount = 0;
+
+  private int segCount = 0;
+
+  public EdiReader(String rootElement, EdiStructure structure) {
     loopStack.push(structure.getRootLoop());
     this.rootElement = rootElement;
-    this.attDefs = structure.getAttributeDefinitions().stream().collect(Collectors.toMap(a -> a.name,a -> a.position));
+    this.attDefs = structure.getAttributeDefinitions().stream()
+        .collect(Collectors.toMap(a -> a.name, a -> a.position));
 
     BiConsumer<List<Element>, EDITokenizer> startElement = (segment, tokenizer) -> {
       String segId = segment.get(0).toString();
@@ -48,10 +73,9 @@ public class EdiReader {
       Set<Integer> attribPositions = this.attDefs.getOrDefault(segId, Collections.emptySet());
       EdiAttributes attributes = new EdiAttributes();
       for (Integer position : attribPositions) {
-        attributes.add(String.format("%s%02d",segId,position),segment.get(position).toString());
+        attributes.add(String.format("%s%02d", segId, position), segment.get(position).toString());
       }
-
-      startElement(segId,attributes);
+      startElement(segId, attributes);
     };
 
     BiConsumer<List<Element>, EDITokenizer> startIsaElement = (segment, tokenizer) -> {
@@ -65,35 +89,165 @@ public class EdiReader {
     BiConsumer<List<Element>, EDITokenizer> createSubElements = (segment, tokenizer) -> {
       String segId = segment.get(0).toString();
       Set<Integer> attribPositions = this.attDefs.getOrDefault(segId, Collections.emptySet());
+      Segment segmentInstance = null;
+      switch (segId) {
+        case "ISA":
+          segmentInstance = new InterChangeHeader();
+          break;
+        case "GS":
+          segmentInstance = new SegmentGroupHeader();
+          break;
+        case "ST":
+          if (x12Instance.txns == null) {
+            x12Instance.txns = new ArrayList<>();
+          }
+          segmentInstance = new TransactionHeader();
+          break;
+        default:
+          try {
+            Class clazz = Class.forName("com.oecgroup.parser.edi.spec." + segId);
+            segmentInstance = (Segment) clazz.getConstructors()[0].newInstance();
+          } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          } catch (InstantiationException e) {
+            e.printStackTrace();
+          } catch (InvocationTargetException e) {
+            e.printStackTrace();
+          }
+      }
+      Field[] fields = segmentInstance.getClass().getDeclaredFields();
+
       try {
         for (int i = 1; i < segment.size(); ++i) {
-          if(!attribPositions.contains(i)) {
+          if (!attribPositions.contains(i)) {
             String name = String.format("%s%02d", segId, i);
             addElement(name, segment.get(i));
+            try {
+              renderObject(segmentInstance, name, segment.get(i), fields);
+            } catch (IllegalAccessException e) {
+              e.printStackTrace();
+            }
           }
         }
       } catch (SAXException e) {
         throw new RuntimeException(e);
       }
+      switch (segId) {
+        case "ISA":
+          x12Instance.isa = (InterChangeHeader) segmentInstance;
+          break;
+        case "GS":
+          x12Instance.gs = (SegmentGroupHeader) segmentInstance;
+          break;
+        case "ST":
+          txn.st = (TransactionHeader) segmentInstance;
+          segCount++;
+          break;
+        default:
+          try {
+            txn.getClass().getDeclaredField(segId.toLowerCase()).set(txn, segmentInstance);
+            segCount++;
+          } catch (NoSuchFieldException e) {
+            //e.printStackTrace();
+            try {
+              Field f = txn.getClass().getDeclaredField(segId.toLowerCase() + "s"); // meaning list
+              if (f.get(txn) == null) {
+                f.set(txn, new ArrayList<>());
+              }
+              ((List) f.get(txn)).add(segmentInstance);
+              segCount++;
+            } catch (NoSuchFieldException | IllegalAccessException e1) {
+              e1.printStackTrace();
+            }
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+          }
+      }
     };
 
-    BiConsumer<List<Element>, EDITokenizer> popToRootLoop = (x,y) -> {
-      while (loopStack.size() > 1){
+    BiConsumer<List<Element>, EDITokenizer> popToRootLoop = (x, y) -> {
+      while (loopStack.size() > 1) {
         endElement();
         loopStack.pop();
       }
     };
 
-    BiConsumer<List<Element>, EDITokenizer> endElement = (x,y) -> endElement();
+    BiConsumer<List<Element>, EDITokenizer> endElement = (segment, tokenizer) -> {
+      endElement();
+      String segId = segment.get(0).toString();
+      Set<Integer> attribPositions = this.attDefs.getOrDefault(segId, Collections.emptySet());
+      Segment segmentInstance = null;
+      switch (segId) {
+        case "SE":
+          segmentInstance = new TransactionTrailer();
+          break;
+        case "GE":
+          segmentInstance = new SegmentGroupTrailer();
+          break;
+        case "IEA":
+          segmentInstance = new InterChangeTrailer();
+          break;
+        default:
+          return;
+      }
+      Field[] fields = segmentInstance.getClass().getDeclaredFields();
 
-    BiConsumer<List<Element>, EDITokenizer> doTransition = (segment,x) -> transitionLevel(segment);
+      try {
+        for (int i = 1; i < segment.size(); ++i) {
+          if (!attribPositions.contains(i)) {
+            String name = String.format("%s%02d", segId, i);
+            addElement(name, segment.get(i));
+            try {
+              renderObject(segmentInstance, name, segment.get(i), fields);
+            } catch (IllegalAccessException e) {
+              e.printStackTrace();
+            }
+          }
+        }
+      } catch (SAXException e) {
+        throw new RuntimeException(e);
+      }
+      switch (segId) {
+        case "IEA":
+          x12Instance.iea = (InterChangeTrailer) segmentInstance;
+          break;
+        case "GE":
+          x12Instance.ge = (SegmentGroupTrailer) segmentInstance;
+          if (Integer.valueOf(x12Instance.ge.transactionCount) == txnCount) {
+            System.out.println("pass txn check");
+          } else {
+            System.err.println("no pass txn check");
+          }
+          break;
+        case "SE":
+          txn.se = (TransactionTrailer) segmentInstance;
+          Cloner cloner = new Cloner();
+          x12Instance.txns.add(cloner.deepClone(txn));
+          segCount++;
+          if (Integer.valueOf(txn.se.segmentCounts) == segCount) {
+            System.out.println("pass segcount check");
+          } else {
+            System.err.println("no pass segment check");
+          }
+          txnCount++;
+          segCount = 0;
+          break;
+        default:
+          break;
+      }
+    };
 
-    BiConsumer<List<Element>, EDITokenizer> defaultCase = doTransition.andThen(startElement).andThen(createSubElements).andThen(endElement);
+    BiConsumer<List<Element>, EDITokenizer> doTransition = (segment, x) -> transitionLevel(segment);
+
+    BiConsumer<List<Element>, EDITokenizer> defaultCase = doTransition.andThen(startElement)
+        .andThen(createSubElements).andThen(endElement);
 
     segmentHandlers = LazyMap.lazyMap(new HashMap<>(), x -> defaultCase);
 
     String endOfLoops = structure.getLoopsEnd();
-    if(U.notEmpty(endOfLoops)){
+    if (U.notEmpty(endOfLoops)) {
       segmentHandlers.put(endOfLoops, popToRootLoop.andThen(defaultCase));
     }
     segmentHandlers.put("ISA", startIsaElement.andThen(createSubElements));
@@ -104,15 +258,35 @@ public class EdiReader {
     segmentHandlers.put("IEA", endElement);
   }
 
-  public void parse(Reader reader) throws IOException, SAXException {
+  public void parse(Reader reader, X12 x12, X12_Txn txn) throws IOException, SAXException {
     EDITokenizer tokenizer = new EDITokenizer(reader);
+    this.x12Instance = x12;
+    this.txn = txn;
     start();
     for (List<Element> segment : tokenizer) {
       String segId = segment.get(0).toString();
+      //System.out.println(segId + " : " + segment.size());
       segmentHandlers.get(segId).accept(segment, tokenizer);
     }
     end();
     reader.close();
+  }
+
+  private void renderObject(Segment segment, String name, Element content, Field[] fields)
+      throws IllegalAccessException {
+    for (Field f : fields) {
+      for (Annotation ano : f.getAnnotations()) {
+        if (ano instanceof EdiRef) {
+          if (name.equalsIgnoreCase(((EdiRef) ano).ref())) {
+            if (!f.getName().startsWith("notUsed")) {
+              f.set(segment, content.toString());
+              //System.out.println("find element " + content + " in refId " + ((EdiRef) ano).ref());
+            }
+            break;
+          }
+        }
+      }
+    }
   }
 
   private void start() throws SAXException {
@@ -120,7 +294,7 @@ public class EdiReader {
   }
 
   private void end() throws SAXException {
-    while(!elementStack.isEmpty()) {
+    while (!elementStack.isEmpty()) {
       endElement();
     }
   }
@@ -129,18 +303,18 @@ public class EdiReader {
     int levelsToPop = 0;
     Iterator<Loop> iterator = loopStack.iterator();
     Loop nextLoop = iterator.next().getTransition(segment);
-    while(nextLoop == null && iterator.hasNext()){
+    while (nextLoop == null && iterator.hasNext()) {
       ++levelsToPop;
       nextLoop = iterator.next().getTransition(segment);
     }
 
-    if(nextLoop != null){
-      for(int i = 0; i < levelsToPop; ++i){
+    if (nextLoop != null) {
+      for (int i = 0; i < levelsToPop; ++i) {
         endElement();
         loopStack.pop();
       }
       String loopName = nextLoop.getName();
-      if(loopName != null){
+      if (loopName != null) {
         startElement(loopName);
       }
       loopStack.push(nextLoop);
@@ -154,11 +328,12 @@ public class EdiReader {
   private void startElement(String elementName, Attributes attributes) {
     elementName = elementName.intern();
     elementStack.push(elementName);
+    //System.out.println("starting element " + elementName + " attributes size " + attributes.getLength());
   }
 
   private void endElement() {
     String name = elementStack.pop();
-
+    //System.out.println("ending element " + name);
   }
 
   private void characters(String string) throws SAXException {
@@ -166,11 +341,11 @@ public class EdiReader {
   }
 
   private void addElement(String elementName, Element content) throws SAXException {
-    if(content instanceof RepeatingElement){
+    if (content instanceof RepeatingElement) {
       addElement(elementName, (RepeatingElement) content);
-    }else if(content instanceof CompositeElement){
-      addElement(elementName, (CompositeElement) content);
-    }else{
+    } else if (content instanceof CompositeElement) { // the first line > would become compositeElement
+      //addElement(elementName, (CompositeElement) content);
+    } else {
       this.addElement(elementName, content.toString());
     }
   }
@@ -179,14 +354,14 @@ public class EdiReader {
     Set<Integer> attribPositions = this.attDefs.getOrDefault(elementName, Collections.emptySet());
     EdiAttributes attributes = new EdiAttributes();
     for (Integer position : attribPositions) {
-      attributes.add(String.format("C%02d",position), content.getPart(position-1));
+      attributes.add(String.format("C%02d", position), content.getPart(position - 1));
     }
 
-    startElement(elementName,attributes);
+    startElement(elementName, attributes);
     int i = 1;
     for (String s : content.getParts()) {
       int position = i++;
-      if(!attribPositions.contains(position)) {
+      if (!attribPositions.contains(position)) {
         String name = String.format("C%02d", position);
         this.addElement(name, s);
       }
@@ -209,8 +384,9 @@ public class EdiReader {
     endElement();
   }
 
-  private void addElement(String elementName, Attributes attributes, String content) throws SAXException {
-    if(includeEmptyElements || U.notEmpty(content) || attributes.getLength() > 0) {
+  public void addElement(String elementName, Attributes attributes, String content)
+      throws SAXException {
+    if (includeEmptyElements || U.notEmpty(content) || attributes.getLength() > 0) {
       startElement(elementName, attributes);
       characters(content);
       endElement();

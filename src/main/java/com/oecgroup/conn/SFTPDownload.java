@@ -9,6 +9,7 @@ import net.schmizz.sshj.xfer.FileSystemFile;
  * Created by Allis Kuo on 2019-03-19
  */
 public class SFTPDownload {
+
   public static void main(String[] args)
       throws IOException {
     final SSHClient ssh = new SSHClient();

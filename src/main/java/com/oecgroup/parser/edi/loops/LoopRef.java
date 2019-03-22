@@ -1,4 +1,3 @@
-
 package com.oecgroup.parser.edi.loops;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -10,10 +9,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "LoopRef")
 public class LoopRef {
 
-    @XmlAttribute(name = "id")
-    protected String id;
+  @XmlAttribute(name = "id")
+  protected String id;
 
-    public String getId() {
-        return id;
-    }
+  public String getId() {
+    return id;
+  }
 }

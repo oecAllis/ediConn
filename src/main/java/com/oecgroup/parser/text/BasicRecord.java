@@ -1,10 +1,9 @@
 package com.oecgroup.parser.text;
 
-import com.ancientprogramming.fixedformat4j.annotation.Record;
-import com.ancientprogramming.fixedformat4j.annotation.Field;
 import com.ancientprogramming.fixedformat4j.annotation.Align;
+import com.ancientprogramming.fixedformat4j.annotation.Field;
 import com.ancientprogramming.fixedformat4j.annotation.FixedFormatPattern;
-
+import com.ancientprogramming.fixedformat4j.annotation.Record;
 import java.util.Date;
 
 /**

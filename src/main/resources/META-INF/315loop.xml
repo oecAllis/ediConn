@@ -1,0 +1,8 @@
+<X12-Structure>
+  <Loop id="R4">
+    <Loop name="R4">
+      <startSegment id="R4">
+      </startSegment>
+    </Loop>
+  </Loop>
+</X12-Structure>

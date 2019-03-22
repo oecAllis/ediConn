@@ -1,22 +1,21 @@
 // company info
-group               = 'org.oecgroup'
-version             = '1.0-SNAPSHO'
-status              = 'integration'
-description         = 'OECGroup edi project'
+group = 'org.oecgroup'
+version = '1.0-SNAPSHO'
+status = 'integration'
+description = 'OECGroup edi project'
 
 // common dependency version info
 
 // code simplify
-ext.lombokVer       = '1.18.4'
-
+ext.lombokVer = '1.18.4'
 
 
 // common library
-ext.guavaVer        = '18.0'
-ext.jacksonVer      = '2.9.8'
+ext.guavaVer = '18.0'
+ext.jacksonVer = '2.9.8'
 
-ext.httpCoreVer     = '4.4.1'
-ext.log4jVer        = '2.11.2'
+ext.httpCoreVer = '4.4.1'
+ext.log4jVer = '2.11.2'
 
 // testing
-ext.junitVer        = '4.12'
+ext.junitVer = '4.12'

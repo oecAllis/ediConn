@@ -14,61 +14,65 @@ public class FixedLength {
    * Express a positive int value as a fixed length sequence of digits.
    *
    * @param value to be represented
-   * @param size  - the fixed length
+   * @param size - the fixed length
    * @return String value
    */
   public static String valueOf(int value, int size) {
-    if (size > 12)
-      throw new RuntimeException("FixedLength.valueOf support not available for sizes > 12 (" + size + " requested)");
+    if (size > 12) {
+      throw new RuntimeException(
+          "FixedLength.valueOf support not available for sizes > 12 (" + size + " requested)");
+    }
     long n = 1000000000000L + value;
     String digits = String.valueOf(n);
     return digits.substring(digits.length() - size);
   }
 
   /**
-   * Force a given String value to a fixed length
-   * by truncating right-most characters or padding on the right with spaces.
+   * Force a given String value to a fixed length by truncating right-most characters or padding on
+   * the right with spaces.
    * <p>
-   * A null or empty String argument results in a String of spaces with the
-   * fixed length.
+   * A null or empty String argument results in a String of spaces with the fixed length.
    *
    * @param value to be represented
-   * @param size  - the fixed length
+   * @param size - the fixed length
    * @return String value
    */
   public static String valueOf(String value, int size) {
-    if (value == null)
+    if (value == null) {
       return spaces(size);
+    }
     int n = value.length();
-    if (n == size)
+    if (n == size) {
       return value;
-    else if (n > size)
+    } else if (n > size) {
       return value.substring(0, size);
-    else
+    } else {
       return value + spaces(size - n);
+    }
   }
 
   /**
-   * Return a String of a fixed length by adding zeros at the beginning
-   * of a given String.
+   * Return a String of a fixed length by adding zeros at the beginning of a given String.
    * <p>
-   * If the original String is greater than the
-   * fixed length, return a right-truncated copy of the String.
+   * If the original String is greater than the fixed length, return a right-truncated copy of the
+   * String.
    *
    * @param value to be represented
-   * @param size  - the fixed length
+   * @param size - the fixed length
    * @return String value
    */
   public static String leadingZeros(String value, int size) {
-    if (value == null)
+    if (value == null) {
       return zeroes(size);
+    }
     int n = value.length();
-    if (n == size)
+    if (n == size) {
       return value;
-    else if (n > size)
+    } else if (n > size) {
       return value.substring(0, size);
-    else
+    } else {
       return zeroes(size - n) + value;
+    }
   }
 
   /**
@@ -78,8 +82,9 @@ public class FixedLength {
    * @return String value
    */
   public static String spaces(int n) {
-    if (n > DEFAULT_SPACES.length())
+    if (n > DEFAULT_SPACES.length()) {
       throw new RuntimeException("Unexpectedly large number of spaces to generate: " + n);
+    }
     return DEFAULT_SPACES.substring(0, n > 0 ? n : 0);
   }
 
@@ -90,8 +95,9 @@ public class FixedLength {
    * @return String value
    */
   public static String zeroes(int n) {
-    if (n > DEFAULT_ZEROES.length())
+    if (n > DEFAULT_ZEROES.length()) {
       throw new RuntimeException("Unexpectedly large number of zeroes to generate: " + n);
+    }
     return DEFAULT_ZEROES.substring(0, n > 0 ? n : 0);
   }
 
@@ -116,8 +122,8 @@ public class FixedLength {
   }
 
   /**
-   * Return the String argument unless that argument is null,
-   * in which case an empty String is returned instead.
+   * Return the String argument unless that argument is null, in which case an empty String is
+   * returned instead.
    *
    * @param value that might be null
    * @return value, but "" if the value is null

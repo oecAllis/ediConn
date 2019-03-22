@@ -28,13 +28,21 @@ public class RepeatingElement extends Element {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
 
     RepeatingElement that = (RepeatingElement) o;
 
-    if (elements != null ? !elements.equals(that.elements) : that.elements != null) return false;
+    if (elements != null ? !elements.equals(that.elements) : that.elements != null) {
+      return false;
+    }
 
     return true;
   }

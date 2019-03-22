@@ -1,22 +1,22 @@
 package com.oecgroup.parser.edi.spec;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 /**
- * Created by Allis Kuo on 2019-03-20
- * Loop R4 070
- * To specify pertinent dates and times
+ * Created by Allis Kuo on 2019-03-20 Loop R4 070 To specify pertinent dates and times
  * DTM*139*20160526*224529
  */
-public class DTM {
+public class DTM implements Segment {
+
   //ID3 DTM01 139 Estimated 140 Actual
-  private String dtQual;
+  @EdiRef(ref = "DTM01")
+  public String dtQual;
   //DT8 DTM02 format yyyymmdd
-  private LocalDate date;
+  @EdiRef(ref = "DTM02")
+  public String date;
   //TM4-8 format hhmmss
-  private LocalDateTime time;
+  @EdiRef(ref = "DTM03")
+  public String time;
   //ID2 DTM04
-  private String zone;
+  @EdiRef(ref = "DTM04")
+  public String zone;
   //not used after
 }

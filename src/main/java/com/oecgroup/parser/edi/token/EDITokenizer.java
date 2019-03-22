@@ -1,6 +1,5 @@
 package com.oecgroup.parser.edi.token;
 
-import com.oecgroup.parser.edi.token.Element;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +27,8 @@ public class EDITokenizer implements Iterable<List<Element>>, Iterator<List<Elem
   private Pattern elementDelimiterRegex;
   private Character compositeDelimiter;
   private Character repetitionSeparator;
-  private Function<String, Element> elementTransformer = string -> Element.create(string, compositeDelimiter, repetitionSeparator);
+  private Function<String, Element> elementTransformer = string -> Element
+      .create(string, compositeDelimiter, repetitionSeparator);
 
   public EDITokenizer(Reader in) throws IOException {
     this(new BufferedReader(in, 4096));
@@ -45,15 +45,15 @@ public class EDITokenizer implements Iterable<List<Element>>, Iterator<List<Elem
 
   public EDITokenizer(BufferedReader reader) throws IOException {
     reader.mark(128);
-    if(reader.read() == '\uFEFF') {
+    if (reader.read() == '\uFEFF') {
       reader.mark(128);
-    }else{
+    } else {
       reader.reset();
     }
 
     char[] buff = new char[108];
     int readResult = reader.read(buff);
-    if(readResult == -1){
+    if (readResult == -1) {
       throw new IOException("EOF before any data");
     }
 
@@ -70,7 +70,7 @@ public class EDITokenizer implements Iterable<List<Element>>, Iterator<List<Elem
     tokenizer.resetSyntax();
     // Everything is part of a token except the segment delimiter.
     tokenizer.wordChars(Character.MIN_VALUE, Character.MAX_VALUE);
-    for(int i = 0; i < segmentDelimiter.length(); ++i){
+    for (int i = 0; i < segmentDelimiter.length(); ++i) {
       char c = segmentDelimiter.charAt(i);
       tokenizer.whitespaceChars(c, c);
     }
@@ -96,16 +96,19 @@ public class EDITokenizer implements Iterable<List<Element>>, Iterator<List<Elem
 
   private void validateFirstSegment(char[] buff, char elementDelimiter) throws IOException {
     if (!"ISA".equalsIgnoreCase(new String(buff, 0, 3))) {
-      throw new IOException("Data does not start with an ISA segment. It starts: '" + new String(buff)+"'");
+      throw new IOException(
+          "Data does not start with an ISA segment. It starts: '" + new String(buff) + "'");
     }
     int elementCount = 1;
     for (char c : buff) {
-      if( c == elementDelimiter){
+      if (c == elementDelimiter) {
         ++elementCount;
       }
     }
-    if(elementCount != 17){
-      throw new IOException("Fixed length ISA segment doesn't have the right number of elements. Segment: '" + new String(buff) + "'");
+    if (elementCount != 17) {
+      throw new IOException(
+          "Fixed length ISA segment doesn't have the right number of elements. Segment: '"
+              + new String(buff) + "'");
     }
   }
 

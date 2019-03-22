@@ -2,6 +2,7 @@ package com.oecgroup.parser.text;
 
 import com.ancientprogramming.fixedformat4j.format.FixedFormatManager;
 import com.ancientprogramming.fixedformat4j.format.impl.FixedFormatManagerImpl;
+
 /**
  * Created by Allis Kuo on 2019-03-19
  */
