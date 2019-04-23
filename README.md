@@ -29,8 +29,13 @@ If additional one has added, then keep it and remove remaining.
 - integration: repo defines repository, model define entity
 - parser: edi for general and 315 spec, text for plain text with fixed length, util for common reused functions
 
-## Assigment
-For Jimmy: 
-1. know how to use sftp and practice how to scan folder and load file
-2. check BasicRecord/BasicUsage to know how to define fixed length schema 
-3. sftp info cmd: sftp -P 2222 oecdev@52.199.51.30 passwd:OecDev^345. cd Testing/Inbound/EDI315, ls files
+## Deploy
+execute commands
+~/code/ediConn/
+./gradlew clean
+./gradlew -Psit distTar
+cd build/distributions/
+scp -r -P 22 ediConn-1.0-SNAPSHO.tar unify@uc:~/
+ssh unify@uc in sit
+mkdir ediFtp
+mkdir railFtp
