@@ -31,6 +31,7 @@ If additional one has added, then keep it and remove remaining.
 
 ## Deploy
 execute commands
+```
 ~/code/ediConn/
 ./gradlew clean
 ./gradlew -Psit distTar
@@ -39,3 +40,4 @@ scp -r -P 22 ediConn-1.0-SNAPSHO.tar unify@uc:~/
 ssh unify@uc in sit
 mkdir ediFtp
 mkdir railFtp
+```
